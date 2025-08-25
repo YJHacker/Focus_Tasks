@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Warrior's Timetable</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 90%;
+        }
+        .glass-container {
+            display: flex;
+            align-items: flex-end;
+            width: 70px;
+            height: 100px;
+            border: 2px solid #3366ff;
+            border-radius: 0 0 15px 15px;
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .glass-fill {
+            width: 100%;
+            transition: height 0.5s ease-in-out;
+            background-color: #3366ff;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            border-radius: 0 0 13px 13px;
+        }
+        .glass-lines {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: space-around;
+            padding-bottom: 5px;
+        }
+        .glass-line {
+            width: 100%;
+            height: 1px;
+            background-color: #e0e0e0;
+            opacity: 0.5;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #162447;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 90%;
+            color: #e0e0e0;
+            border: 2px solid #3366ff;
+        }
+        .glow {
+            box-shadow: 0 0 10px #3366ff, 0 0 20px #3366ff, 0 0 30px #3366ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex flex-col items-center min-h-screen p-4">
+
+    <!-- Header Section -->
+    <div class="container text-center py-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-blue-500 mb-2 drop-shadow-lg">The Warrior's Timetable</h1>
+        <p class="text-md md:text-lg text-gray-400">Master your day, one task at a time.</p>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="container grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+
+        <!-- Timetable Section -->
+        <div class="col-span-1 md:col-span-2 bg-gray-800 p-6 rounded-3xl shadow-lg border border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Today's Mission</h2>
+            <div id="timetable-list" class="space-y-4">
+                <!-- Timetable tasks will be dynamically added here -->
+            </div>
+            <button id="add-task-btn" class="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-700 transition-colors duration-200 rounded-2xl font-bold shadow-md">
+                <i class="fas fa-plus mr-2"></i> Add New Task
+            </button>
+        </div>
+
+        <!-- Right Sidebar - Water & Rewards -->
+        <div class="col-span-1 bg-gray-800 p-6 rounded-3xl shadow-lg border border-gray-700 flex flex-col items-center">
+            
+            <!-- Water Tracker Section -->
+            <div class="mb-8 w-full text-center">
+                <h3 class="text-xl font-bold mb-4 text-blue-400">Hydration</h3>
+                <div class="flex justify-center items-end space-x-4">
+                    <div id="glass1" class="glass-container">
+                        <div class="glass-lines">
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                        </div>
+                    </div>
+                    <div id="glass2" class="glass-container">
+                        <div class="glass-lines">
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                        </div>
+                    </div>
+                    <div id="glass3" class="glass-container">
+                        <div class="glass-lines">
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                        </div>
+                    </div>
+                    <div id="glass4" class="glass-container">
+                        <div class="glass-lines">
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                            <div class="glass-line"></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="drink-water-btn" class="mt-4 py-2 px-6 bg-blue-600 hover:bg-blue-700 transition-colors duration-200 rounded-2xl font-bold shadow-md text-sm">
+                    Drink Glass <i class="fas fa-glass-water ml-1"></i>
+                </button>
+            </div>
+            
+            <!-- End of Day Rewards Section -->
+            <div id="reward-section" class="w-full text-center p-4 rounded-xl border border-blue-500 bg-gray-900 shadow-xl hidden">
+                <h3 class="text-xl font-bold text-green-400 mb-2">Daily Victory</h3>
+                <p id="reward-quote" class="text-md italic text-gray-300">"You fought like a warrior today."</p>
+            </div>
+            
+            <!-- The 'Do Not Burnout' Message -->
+            <div id="burnout-message" class="w-full text-center p-4 mt-auto rounded-xl border border-red-500 bg-red-900 bg-opacity-30 shadow-xl hidden">
+                <p class="text-md text-red-300 italic">"Do not burn out, you are a warrior I know."</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Task Creation Modal -->
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4 text-blue-400">Create a New Task</h3>
+            <form id="task-form" class="space-y-4">
+                <div>
+                    <label for="task-name" class="block text-left text-sm font-medium text-gray-300">Task Name</label>
+                    <input type="text" id="task-name" name="task-name" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
+                </div>
+                <div class="flex space-x-4">
+                    <div class="flex-1">
+                        <label for="start-time" class="block text-left text-sm font-medium text-gray-300">Start Time</label>
+                        <input type="time" id="start-time" name="start-time" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
+                    </div>
+                    <div class="flex-1">
+                        <label for="end-time" class="block text-left text-sm font-medium text-gray-300">End Time</label>
+                        <input type="time" id="end-time" name="end-time" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
+                    </div>
+                </div>
+                <div>
+                    <label for="task-message" class="block text-left text-sm font-medium text-gray-300">Alarm Message</label>
+                    <textarea id="task-message" name="task-message" rows="3" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2" placeholder="e.g., 'You are running out of time, start your revision now!'"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 transition-colors duration-200 rounded-2xl font-bold shadow-md">
+                    Add Task
+                </button>
+            </form>
+            <button id="close-modal-btn" class="mt-4 text-sm text-gray-400 hover:text-gray-200">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Alarm/Reminder Modal -->
+    <div id="alarm-modal" class="modal-overlay">
+        <div class="modal-content bg-red-900 border-red-500">
+            <h3 id="alarm-title" class="text-2xl font-bold mb-2 text-red-300">Time to Rise!</h3>
+            <p id="alarm-message" class="text-lg mb-4 text-gray-100">Your golden hour is here. Do not lose this streak!</p>
+            <button id="close-alarm-btn" class="py-2 px-6 bg-red-600 hover:bg-red-700 transition-colors duration-200 rounded-2xl font-bold">
+                I'm a Warrior
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Store tasks in an array
+        let timetableTasks = [];
+        let waterCount = 0;
+        let alarmCheckInterval;
+        let tasksCompleted = 0;
+
+        // Quotes for rewards and burnout
+        const rewardQuotes = [
+            "You fought like a warrior today.",
+            "You're being an alpha male today.",
+            "Success is a streak. You've just extended it.",
+            "Another day, another victory. You are unstoppable."
+        ];
+        const burnoutQuote = "Do not burn out, you are a warrior I know.";
+
+        // DOM Elements
+        const timetableList = document.getElementById('timetable-list');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const taskModal = document.getElementById('task-modal');
+        const taskForm = document.getElementById('task-form');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const alarmModal = document.getElementById('alarm-modal');
+        const alarmMessage = document.getElementById('alarm-message');
+        const closeAlarmBtn = document.getElementById('close-alarm-btn');
+        const drinkWaterBtn = document.getElementById('drink-water-btn');
+        const waterGlasses = [
+            document.getElementById('glass1'),
+            document.getElementById('glass2'),
+            document.getElementById('glass3'),
+            document.getElementById('glass4')
+        ];
+        const rewardSection = document.getElementById('reward-section');
+        const rewardQuoteEl = document.getElementById('reward-quote');
+        const burnoutMessageEl = document.getElementById('burnout-message');
+
+        // Functions
+        
+        /**
+         * Renders a timetable task item on the page.
+         * @param {object} task - The task object to render.
+         */
+        function renderTask(task) {
+            const taskEl = document.createElement('div');
+            taskEl.className = "bg-gray-700 p-4 rounded-xl flex items-center justify-between shadow-inner";
+            taskEl.innerHTML = `
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-300">${task.name}</h3>
+                    <p class="text-sm text-gray-400">${task.startTime} - ${task.endTime}</p>
+                </div>
+                <button class="complete-task-btn py-1 px-3 bg-green-500 hover:bg-green-600 transition-colors rounded-xl text-xs font-bold shadow">
+                    Complete
+                </button>
+            `;
+            timetableList.appendChild(taskEl);
+
+            // Add event listener to the "Complete" button
+            taskEl.querySelector('.complete-task-btn').addEventListener('click', () => {
+                taskEl.classList.add('opacity-50');
+                taskEl.classList.add('line-through');
+                taskEl.classList.remove('bg-gray-700');
+                taskEl.classList.add('bg-gray-900');
+                taskEl.querySelector('.complete-task-btn').remove();
+                tasksCompleted++;
+                checkBurnoutMessage();
+            });
+        }
+
+        /**
+         * Checks the current time and shows an alarm if a task is starting.
+         */
+        function checkAlarms() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            timetableTasks.forEach(task => {
+                if (task.startTime === currentTime) {
+                    showAlarm(task.message);
+                }
+            });
+        }
+
+        /**
+         * Displays the alarm modal with a custom message.
+         * @param {string} message - The message to display.
+         */
+        function showAlarm(message) {
+            alarmMessage.textContent = message;
+            alarmModal.style.display = 'flex';
+        }
+
+        /**
+         * Shows the end-of-day reward quote.
+         */
+        function showReward() {
+            const randomIndex = Math.floor(Math.random() * rewardQuotes.length);
+            rewardQuoteEl.textContent = rewardQuotes[randomIndex];
+            rewardSection.classList.remove('hidden');
+        }
+
+        /**
+         * Checks if the burnout message should be displayed.
+         */
+        function checkBurnoutMessage() {
+            // Display burnout message after a certain number of tasks
+            if (tasksCompleted >= 3) {
+                burnoutMessageEl.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Fills a part of the water glass.
+         */
+        function drinkWater() {
+            if (waterCount < 16) {
+                const glassIndex = Math.floor(waterCount / 4);
+                const partIndex = waterCount % 4;
+
+                const glassContainer = waterGlasses[glassIndex];
+                let fillElement = glassContainer.querySelector('.glass-fill');
+                if (!fillElement) {
+                    fillElement = document.createElement('div');
+                    fillElement.className = 'glass-fill';
+                    glassContainer.appendChild(fillElement);
+                }
+                
+                const partHeight = 25; // 4 parts, so each is 25% height
+                fillElement.style.height = `${(partIndex + 1) * partHeight}%`;
+                
+                waterCount++;
+            }
+        }
+
+        // Event Listeners
+        
+        // Open the task creation modal
+        addTaskBtn.addEventListener('click', () => {
+            taskModal.style.display = 'flex';
+        });
+
+        // Close the task creation modal
+        closeModalBtn.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+
+        // Handle the submission of the new task form
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const taskName = document.getElementById('task-name').value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const taskMessage = document.getElementById('task-message').value || "You are running out of time, start your task now!";
+
+            const newTask = {
+                name: taskName,
+                startTime: startTime,
+                endTime: endTime,
+                message: taskMessage
+            };
+
+            timetableTasks.push(newTask);
+            renderTask(newTask);
+            taskForm.reset();
+            taskModal.style.display = 'none';
+        });
+
+        // Close the alarm modal
+        closeAlarmBtn.addEventListener('click', () => {
+            alarmModal.style.display = 'none';
+        });
+
+        // Handle the "Drink Water" button click
+        drinkWaterBtn.addEventListener('click', drinkWater);
+        
+        // Initial setup and loop
+        window.onload = function() {
+            // Check for alarms every minute
+            alarmCheckInterval = setInterval(checkAlarms, 60000);
+            
+            // At 10 PM (22:00), show the reward
+            setInterval(() => {
+                const now = new Date();
+                if (now.getHours() === 22 && now.getMinutes() === 0) {
+                    showReward();
+                }
+            }, 60000);
+        };
+    </script>
+</body>
+</html>
