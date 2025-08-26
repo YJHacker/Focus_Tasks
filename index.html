@@ -135,14 +135,18 @@
                 <div class="container text-center py-8">
                     <h1 class="text-4xl md:text-5xl font-extrabold text-blue-500 mb-2 drop-shadow-lg">Today's Mission</h1>
                     <p class="text-md md:text-lg text-gray-400">Master your day, one task at a time.</p>
+                    <!-- Quote of the Day -->
+                    <div class="w-full text-center p-4 rounded-xl border border-blue-500 bg-gray-900 shadow-xl mt-4">
+                        <p id="quote-of-the-day" class="text-sm italic text-gray-300">"The only way to do great work is to love what you do."</p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     <!-- Timetable Section -->
                     <div class="bg-gray-800 p-6 rounded-3xl shadow-lg border border-gray-700">
-                        <h2 class="text-2xl font-bold mb-4 text-blue-400">Timetable</h2>
+                        <h2 class="text-2xl font-bold mb-4 text-blue-400">Today's Routines</h2>
                         <div id="timetable-list" class="space-y-4"></div>
-                        <button id="add-task-btn" class="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-700 transition-colors duration-200 rounded-2xl font-bold shadow-md">
-                            <i class="fas fa-plus mr-2"></i> Add New Task
+                        <button id="add-routine-btn" class="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-700 transition-colors duration-200 rounded-2xl font-bold shadow-md">
+                            <i class="fas fa-plus mr-2"></i> Add New Routine
                         </button>
                     </div>
 
@@ -211,13 +215,13 @@
         </nav>
 
         <!-- Task Creation Modal -->
-        <div id="task-modal" class="modal-overlay">
+        <div id="routine-modal" class="modal-overlay">
             <div class="modal-content">
-                <h3 class="text-2xl font-bold mb-4 text-blue-400">Create a New Task</h3>
-                <form id="task-form" class="space-y-4">
+                <h3 class="text-2xl font-bold mb-4 text-blue-400">Create a New Routine</h3>
+                <form id="routine-form" class="space-y-4">
                     <div>
-                        <label for="task-name" class="block text-left text-sm font-medium text-gray-300">Task Name</label>
-                        <input type="text" id="task-name" name="task-name" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
+                        <label for="routine-name" class="block text-left text-sm font-medium text-gray-300">Routine Name</label>
+                        <input type="text" id="routine-name" name="routine-name" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
                     </div>
                     <div class="flex space-x-4">
                         <div class="flex-1">
@@ -230,14 +234,23 @@
                         </div>
                     </div>
                     <div>
-                        <label for="task-message" class="block text-left text-sm font-medium text-gray-300">Alarm Message</label>
-                        <textarea id="task-message" name="task-message" rows="3" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2" placeholder="e.g., 'You are running out of time, start your revision now!'"></textarea>
+                        <label for="alarm-message" class="block text-left text-sm font-medium text-gray-300">Alarm Message</label>
+                        <textarea id="alarm-message" name="alarm-message" rows="3" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2" placeholder="e.g., 'You are running out of time, start your revision now!'"></textarea>
+                    </div>
+                    <div class="flex space-x-4">
+                        <div class="flex-1">
+                            <label for="routine-day" class="block text-left text-sm font-medium text-gray-300">Day</label>
+                            <select id="routine-day" name="routine-day" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white p-2">
+                                <option value="today">Today</option>
+                                <option value="tomorrow">Tomorrow</option>
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="w-full py-3 px-4 bg-green-600 hover:bg-green-700 transition-colors duration-200 rounded-2xl font-bold shadow-md">
-                        Add Task
+                        Add Routine
                     </button>
                 </form>
-                <button id="close-modal-btn" class="mt-4 text-sm text-gray-400 hover:text-gray-200">Cancel</button>
+                <button id="close-routine-modal-btn" class="mt-4 text-sm text-gray-400 hover:text-gray-200">Cancel</button>
             </div>
         </div>
 
@@ -271,7 +284,7 @@
 
     // --- GLOBAL APP STATE ---
     let userData = {
-        tasks: [],
+        routines: [],
         water: 0,
         exercise: 0,
         streak: {
@@ -287,7 +300,8 @@
     };
     let currentTab = 'home';
     let userLoggedIn = false;
-    let notifiedTasks = {}; // To track which tasks have already triggered an alarm
+    let notifiedRoutines = {}; // To track which routines have already triggered an alarm
+    let today = new Date().toISOString().slice(0, 10);
 
     // DOM Elements
     const appContainer = document.getElementById('app-container');
@@ -305,8 +319,23 @@
     const burnoutMessageEl = document.getElementById('burnout-message');
     const drinkWaterBtn = document.getElementById('drink-water-btn');
     const usernameInput = document.getElementById('username');
+    const quoteOfTheDayEl = document.getElementById('quote-of-the-day');
+    const addRoutineBtn = document.getElementById('add-routine-btn');
+    const routineModal = document.getElementById('routine-modal');
+    const closeRoutineModalBtn = document.getElementById('close-routine-modal-btn');
+    const routineForm = document.getElementById('routine-form');
+    const routineDaySelect = document.getElementById('routine-day');
+    const homeRoutineTitle = document.querySelector('#home-tab h2');
 
     // Quotes and messages
+    const motivationalQuotes = [
+        "The only way to do great work is to love what you do. - Steve Jobs",
+        "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt",
+        "The best way to predict the future is to create it. - Peter Drucker",
+        "Don't watch the clock; do what it does. Keep going. - Sam Levenson",
+        "Believe you can and you're halfway there. - Theodore Roosevelt"
+    ];
+
     const motivationalMessages = [
         "You improved {percent}% from yesterday! Keep pushing!",
         "Great job, you're on a roll!",
@@ -317,8 +346,8 @@
 
     // --- CORE FUNCTIONS ---
     function handleDailyReset() {
-        const today = new Date().toISOString().slice(0, 10);
-        if (userData.streak.lastUpdated !== today) {
+        const newToday = new Date().toISOString().slice(0, 10);
+        if (userData.streak.lastUpdated !== newToday) {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const yesterdayKey = yesterday.toISOString().slice(0, 10);
@@ -326,22 +355,33 @@
             const yesterdayData = {
                 water: userData.water || 0,
                 exercise: userData.exercise || 0,
-                tasksCompleted: userData.tasks.filter(t => t.completed).length,
+                routinesCompleted: userData.routines.filter(r => r.completed && r.day === yesterdayKey).length,
+                totalFocusTime: calculateTotalFocusTime(yesterdayKey),
             };
             userData.analytics.daily[yesterdayKey] = yesterdayData;
 
-            const isStreakDay = (yesterdayData.tasksCompleted > 0 || yesterdayData.exercise > 0 || yesterdayData.water >= 4);
+            const isStreakDay = (yesterdayData.routinesCompleted > 0 || yesterdayData.exercise > 0 || yesterdayData.water >= 4);
             const newStreak = [...userData.streak.days];
             newStreak.shift();
             newStreak.push(isStreakDay ? 'lit' : 'cross');
             userData.streak.days = newStreak;
-            userData.streak.lastUpdated = today;
+            userData.streak.lastUpdated = newToday;
 
-            userData.tasks = [];
+            // Reset for today's routines and move tomorrow's to today
+            const tomorrowKey = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10);
+            userData.routines = userData.routines.filter(r => r.day !== yesterdayKey).map(r => {
+                if (r.day === tomorrowKey) {
+                    r.day = newToday;
+                    r.completed = false; // Reset completion status for new day
+                }
+                return r;
+            });
+            
             userData.water = 0;
             userData.exercise = 0;
             saveState();
         }
+        today = newToday;
     }
     
     setInterval(handleDailyReset, 60000);
@@ -372,40 +412,62 @@
         }
     }
 
+    function calculateTotalFocusTime(day = today) {
+        let totalMinutes = 0;
+        userData.routines.forEach(routine => {
+            if (routine.day === day && routine.completed && routine.startTime && routine.endTime) {
+                const [startH, startM] = routine.startTime.split(':').map(Number);
+                const [endH, endM] = routine.endTime.split(':').map(Number);
+                let durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+                if (durationMinutes < 0) {
+                    durationMinutes += 24 * 60;
+                }
+                totalMinutes += durationMinutes;
+            }
+        });
+        return totalMinutes;
+    }
+
     function renderTimetable() {
         timetableList.innerHTML = '';
-        if (userData.tasks.length === 0) {
-            timetableList.innerHTML = `<p class="text-center text-gray-500 italic">No tasks yet. Click "Add New Task" to begin your journey!</p>`;
+        const todayRoutines = userData.routines.filter(r => r.day === today);
+
+        if (todayRoutines.length === 0) {
+            timetableList.innerHTML = `<p class="text-center text-gray-500 italic">No routines for today. Click "Add New Routine" to begin!</p>`;
         }
-        userData.tasks.forEach((task, index) => {
-            const taskEl = document.createElement('div');
-            taskEl.className = `bg-gray-700 p-4 rounded-xl flex items-center justify-between shadow-inner ${task.completed ? 'opacity-50 line-through' : ''}`;
-            taskEl.innerHTML = `
+        
+        homeRoutineTitle.textContent = `Today's Routines`;
+        todayRoutines.forEach((routine, index) => {
+            const routineEl = document.createElement('div');
+            routineEl.className = `bg-gray-700 p-4 rounded-xl flex items-center justify-between shadow-inner ${routine.completed ? 'opacity-50 line-through' : ''}`;
+            routineEl.innerHTML = `
                 <div>
-                    <h3 class="text-lg font-semibold text-blue-300">${task.name}</h3>
-                    <p class="text-sm text-gray-400">${task.startTime} - ${task.endTime}</p>
+                    <h3 class="text-lg font-semibold text-blue-300">${routine.name}</h3>
+                    <p class="text-sm text-gray-400">${routine.startTime} - ${routine.endTime}</p>
                 </div>
-                ${!task.completed ? `<button data-index="${index}" class="complete-task-btn py-1 px-3 bg-green-500 hover:bg-green-600 transition-colors duration-200 rounded-2xl text-xs font-bold shadow">
+                ${!routine.completed ? `<button data-index="${index}" class="complete-routine-btn py-1 px-3 bg-green-500 hover:bg-green-600 transition-colors duration-200 rounded-2xl text-xs font-bold shadow">
                     Complete
                 </button>` : ''}
             `;
-            const completeBtn = taskEl.querySelector('.complete-task-btn');
+            const completeBtn = routineEl.querySelector('.complete-routine-btn');
             if (completeBtn) {
                 completeBtn.addEventListener('click', () => {
-                    const taskIndex = parseInt(completeBtn.dataset.index, 10);
-                    userData.tasks[taskIndex].completed = true;
-                    saveState();
-                    renderTimetable();
+                    const routineIndex = userData.routines.findIndex(r => r.name === routine.name && r.day === today);
+                    if (routineIndex !== -1) {
+                         userData.routines[routineIndex].completed = true;
+                         saveState();
+                         renderTimetable();
+                    }
                 });
             }
-            timetableList.appendChild(taskEl);
+            timetableList.appendChild(routineEl);
         });
     }
 
     function renderWaterGlasses() {
         waterGlassesContainer.innerHTML = '';
         const totalQuarters = Math.round(userData.water * 4);
-        const totalGlassesNeeded = Math.ceil(totalQuarters / 4);
+        const totalGlassesNeeded = Math.ceil(totalQuarters / 4) || 1;
         
         for (let i = 0; i < totalGlassesNeeded; i++) {
             const glass = document.createElement('div');
@@ -471,9 +533,10 @@
             if (prevReport) {
                 const waterChange = (report.water - prevReport.water) / (prevReport.water || 1);
                 const exerciseChange = (report.exercise - prevReport.exercise) / (prevReport.exercise || 1);
-                const totalChange = waterChange + exerciseChange;
+                const focusChange = (report.totalFocusTime - prevReport.totalFocusTime) / (prevReport.totalFocusTime || 1);
+                const totalChange = waterChange + exerciseChange + focusChange;
                 if (totalChange > 0) {
-                    const improvementPercent = Math.min(100, Math.round(totalChange * 50));
+                    const improvementPercent = Math.min(100, Math.round(totalChange * 33));
                     improvementMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)].replace('{percent}', improvementPercent);
                 } else {
                     improvementMessage = "Keep pushing forward! You've got this.";
@@ -483,7 +546,8 @@
             dailyReportsEl.innerHTML += `
                 <div class="bg-gray-700 p-4 rounded-xl mb-4 shadow-inner">
                     <h4 class="text-lg font-semibold text-gray-200">${day}</h4>
-                    <p class="text-sm text-gray-400">Water: ${report.water || 0} glasses, Exercise: ${report.exercise || 0} mins</p>
+                    <p class="text-sm text-gray-400">Water: ${report.water || 0} glasses, Exercise: ${report.exercise || 0} mins, Routines: ${report.routinesCompleted || 0}</p>
+                    <p class="text-sm">Total Focus Time: ${Math.floor((report.totalFocusTime || 0) / 60)}h ${Math.round((report.totalFocusTime || 0) % 60)}m</p>
                     ${improvementMessage ? `<p class="text-sm italic text-green-400 mt-2">${improvementMessage}</p>` : ''}
                 </div>
             `;
@@ -492,18 +556,14 @@
         analyticsContent.appendChild(dailyReportsEl);
 
         const weeklyReportsEl = document.createElement('div');
-        weeklyReportsEl.innerHTML = `<h3 class="text-xl font-bold text-blue-400 mb-4">Weekly Reports</h3>`;
+        weeklyReportsEl.innerHTML = `<h3 class="text-xl font-bold text-blue-400 mb-4">Weekly Report</h3>`;
+        
+        const weekDates = Object.keys(dailyData).sort((a,b) => new Date(a) - new Date(b)).slice(-7);
+        const weeklyWaterData = weekDates.map(date => dailyData[date]?.water || 0);
+
         const weeklyChartEl = document.createElement('div');
         weeklyChartEl.className = 'bar-chart-container';
         
-        const weeklyWaterData = Array(7).fill(0);
-        for (let i = 0; i < 7; i++) {
-            const date = dates[i];
-            if (date && dailyData[date]) {
-                weeklyWaterData[6 - i] = dailyData[date].water || 0;
-            }
-        }
-
         weeklyWaterData.forEach((value) => {
             const bar = document.createElement('div');
             const height = (value / 8) * 100;
@@ -538,22 +598,31 @@
         });
     });
 
-    document.getElementById('add-task-btn').addEventListener('click', () => {
-        document.getElementById('task-modal').style.display = 'flex';
+    addRoutineBtn.addEventListener('click', () => {
+        routineModal.style.display = 'flex';
+        // Set default day to today
+        const todayDate = new Date();
+        const tomorrowDate = new Date(todayDate);
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        routineDaySelect.innerHTML = `
+            <option value="${todayDate.toISOString().slice(0, 10)}">Today</option>
+            <option value="${tomorrowDate.toISOString().slice(0, 10)}">Tomorrow</option>
+        `;
     });
-    document.getElementById('close-modal-btn').addEventListener('click', () => {
-        document.getElementById('task-modal').style.display = 'none';
+    closeRoutineModalBtn.addEventListener('click', () => {
+        routineModal.style.display = 'none';
     });
 
-    document.getElementById('task-form').addEventListener('submit', (e) => {
+    routineForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const taskName = document.getElementById('task-name').value;
+        const routineName = document.getElementById('routine-name').value;
         const startTime = document.getElementById('start-time').value;
         const endTime = document.getElementById('end-time').value;
-        const taskMessage = document.getElementById('task-message').value || "You are running out of time, start your task now!";
-        userData.tasks.push({ name: taskName, startTime, endTime, message: taskMessage, completed: false });
+        const alarmMessage = document.getElementById('alarm-message').value || "You are running out of time, start your revision now!";
+        const routineDay = document.getElementById('routine-day').value;
+        userData.routines.push({ name: routineName, startTime, endTime, message: alarmMessage, completed: false, day: routineDay });
         saveState();
-        document.getElementById('task-modal').style.display = 'none';
+        routineModal.style.display = 'none';
         renderAllTabs();
     });
 
@@ -583,12 +652,15 @@
     const closeAlarmBtn = document.getElementById('close-alarm-btn');
     const alarmInterval = setInterval(checkAlarms, 1000);
     const burnoutInterval = setInterval(() => {
-        if (userLoggedIn && Math.random() > 0.9 && userData.tasks.length > 0) {
+        if (userLoggedIn && Math.random() > 0.9 && userData.routines.length > 0) {
             showBurnoutMessage();
         }
     }, 1200000);
 
     function showAlarm(message) {
+        if (Notification.permission === "granted") {
+            new Notification("Time to Rise!", { body: message });
+        }
         alarmMessageEl.textContent = message;
         alarmModal.style.display = 'flex';
     }
@@ -601,10 +673,11 @@
         if (!userLoggedIn) return;
         const now = new Date();
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        userData.tasks.forEach(task => {
-            if (task.startTime === currentTime && !task.completed && !notifiedTasks[task.startTime]) {
-                showAlarm(task.message);
-                notifiedTasks[task.startTime] = true; // Mark as notified
+        userData.routines.forEach(routine => {
+            const routineDay = routine.day ? routine.day : today;
+            if (routineDay === today && routine.startTime === currentTime && !routine.completed && !notifiedRoutines[routine.startTime]) {
+                showAlarm(routine.message);
+                notifiedRoutines[routine.startTime] = true;
             }
         });
     }
@@ -617,6 +690,10 @@
     }
 
     async function init() {
+        if ("Notification" in window && Notification.permission !== 'granted') {
+            await Notification.requestPermission();
+        }
+        
         const savedData = loadState();
         if (savedData) {
             userData = savedData;
@@ -630,6 +707,9 @@
             loadingScreen.classList.add('hidden');
             loginModal.style.display = 'flex';
         }
+        
+        const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+        quoteOfTheDayEl.textContent = randomQuote;
     }
     
     window.onload = init;
